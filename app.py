@@ -30,8 +30,7 @@ def set_cell_bg(cell, hex_color: str):
     """Set table cell background shading."""
     tc = cell._tc
     tcPr = tc.get_or_add_tcPr()
-    shd = OxmlElement('w
-shd')
+    shd = OxmlElement('w:shd')
     shd.set(qn('w:val'), 'clear')
     shd.set(qn('w:color'), 'auto')
     shd.set(qn('w:fill'), hex_color)
