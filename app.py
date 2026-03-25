@@ -328,10 +328,21 @@ def build_minutes_docx(meeting_info: dict, minutes: dict, full_transcript: list)
     if not os.path.exists(TEMPLATE_PATH):
         raise FileNotFoundError(f"Template not found at {TEMPLATE_PATH}")
 
-    try:
+    # Validate template ZIP integrity before loading
+    _template_ok = False
+    if os.path.exists(TEMPLATE_PATH):
+        try:
+            import zipfile as _zf
+            with _zf.ZipFile(TEMPLATE_PATH, 'r') as _z:
+                _bad = _z.testzip()
+                if _bad is None:
+                    _template_ok = True
+        except Exception:
+            _template_ok = False
+    
+    if _template_ok:
         doc = Document(TEMPLATE_PATH)
-    except Exception:
-        # Template corrupted or missing — fall back to blank document
+    else:
         doc = Document()
         doc.add_paragraph()  # ensure at least one paragraph exists
 
