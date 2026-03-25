@@ -214,7 +214,7 @@ def add_action_items_table(doc, action_items: list):
         cell.width = w
         set_cell_bg(cell, '1F497D')
         p = cell.paragraphs[0]
-  2     r = p.add_run(h)
+        r = p.add_run(h)
         r.font.bold = True
         r.font.size = Pt(8)
         r.font.name = 'Assistant'
