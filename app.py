@@ -1,6 +1,6 @@
 """
-XGL South Africa — Meeting Minutes DOCX Microservice
-Flask service: receives JSON → generates DOCX from company template → returns binary file
+XGL South Africa â Meeting Minutes DOCX Microservice
+Flask service: receives JSON â generates DOCX from company template â returns binary file
 Deploy on Render.com (free tier) or any Python host
 """
 
@@ -22,10 +22,10 @@ import lxml.etree as etree
 app = Flask(__name__)
 logging.basicConfig(level=logging.INFO)
 
-# Template file path — should sit next to app.py
+# Template file path â should sit next to app.py
 TEMPLATE_PATH = os.path.join(os.path.dirname(__file__), "template.docx")
 
-# ── helpers ────────────────────────────────────────────────────────────────
+# ââ helpers ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 def set_cell_bg(cell, hex_color: str):
     """Set table cell background shading."""
@@ -137,21 +137,21 @@ def add_meta_table(doc, meeting_info: dict):
         # value cell
         vc = row.cells[1]
         vp = vc.paragraphs[0]
-        vr = vp.add_run(str(value) if value else '—')
+        vr = vp.add_run(str(value) if value else 'â')
         vr.font.size = Pt(9)
         vr.font.name = 'Assistant'
 
-    add_row('Title / 标题 (EN)', meeting_info.get('title_en', ''))
-    add_row('Title / 标题 (ZH)', meeting_info.get('title_zh', ''))
-    add_row('Date / 日期', meeting_info.get('date', ''))
-    add_row('Location / 地点', meeting_info.get('location', ''))
+    add_row('Title / æ é¢ (EN)', meeting_info.get('title_en', ''))
+    add_row('Title / æ é¢ (ZH)', meeting_info.get('title_zh', ''))
+    add_row('Date / æ¥æ', meeting_info.get('date', ''))
+    add_row('Location / å°ç¹', meeting_info.get('location', ''))
 
     participants = meeting_info.get('participants', [])
     if isinstance(participants, list):
         participants_str = '\n'.join(participants)
     else:
         participants_str = str(participants)
-    add_row('Participants / 与会人员', participants_str)
+    add_row('Participants / ä¸ä¼äººå', participants_str)
 
     doc.add_paragraph()  # spacer
 
@@ -159,7 +159,7 @@ def add_decisions_section(doc, decisions: list):
     """Add key decisions section."""
     if not decisions:
         return
-    add_heading(doc, '2. Key Decisions / 主要决议', level=1)
+    add_heading(doc, '2. Key Decisions / ä¸»è¦å³è®®', level=1)
     for i, item in enumerate(decisions, 1):
         en = item.get('en', '')
         zh = item.get('zh', '')
@@ -199,7 +199,7 @@ def add_action_items_table(doc, action_items: list):
     """Add action items as a formatted table."""
     if not action_items:
         return
-    add_heading(doc, '3. Action Items / 行动事项', level=1)
+    add_heading(doc, '3. Action Items / è¡å¨äºé¡¹', level=1)
 
     headers = ['Task (EN/ZH)', 'Owner', 'Deadline', 'Speaker', 'Evidence']
     col_widths = [Inches(2.8), Inches(1.0), Inches(0.9), Inches(0.9), Inches(0.8)]
@@ -225,7 +225,7 @@ def add_action_items_table(doc, action_items: list):
     for item in action_items:
         row = tbl.add_row()
         task_en = item.get('task_en', '')
-        task`zh = item.get('task_zh', '')
+        task_zh = item.get('task_zh', '')
 
         # Task cell (EN + ZH)
         tc = row.cells[0]
@@ -241,7 +241,7 @@ def add_action_items_table(doc, action_items: list):
 
         def fill_cell(c, text, center=False):
             p = c.paragraphs[0]
-            r = p.add_run(str(text) if text else '—')
+            r = p.add_run(str(text) if text else 'â')
             r.font.size = Pt(8)
             r.font.name = 'Assistant'
             if center:
@@ -258,13 +258,13 @@ def add_pending_section(doc, pending: list):
     """Add pending matters section."""
     if not pending:
         return
-    add_heading(doc, '4. Pending Matters / 待处理事项', level=1)
+    add_heading(doc, '4. Pending Matters / å¾å¤çäºé¡¹', level=1)
     for item in pending:
         en = item.get('en', '')
         zh = item.get('zh', '')
         speaker = item.get('speaker', '')
         time_range = item.get('evidence_time_range', '')
-        add_bilingual_para(doc, en, zh, prefix='•', indent=True)
+        add_bilingual_para(doc, en, zh, prefix='â¢', indent=True)
         if speaker or time_range:
             p = doc.add_paragraph()
             p.paragraph_format.left_indent = Inches(0.6)
@@ -286,9 +286,9 @@ def add_transcript_appendix(doc, full_transcript: list):
         return
 
     doc.add_page_break()
-    add_heading(doc, 'Appendix: Full Bilingual Transcript / 附录：完整双语转录', level=1)
+    add_heading(doc, 'Appendix: Full Bilingual Transcript / éå½ï¼å®æ´åè¯­è½¬å½', level=1)
 
-    headers = ['Speaker', 'Time', 'English', '中文']
+    headers = ['Speaker', 'Time', 'English', 'ä¸­æ']
     col_widths = [Inches(0.9), Inches(0.7), Inches(2.5), Inches(2.5)]
 
     tbl = doc.add_table(rows=1, cols=4)
@@ -322,7 +322,7 @@ def add_transcript_appendix(doc, full_transcript: list):
         fill(row.cells[3], entry.get('zh_text', ''))
 
 
-# ── main document builder ───────────────────────────────────────────────────
+# ââ main document builder âââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 def build_minutes_docx(meeting_info: dict, minutes: dict, full_transcript: list) -> bytes:
     """Build the DOCX from the template and return as bytes."""
@@ -332,7 +332,7 @@ def build_minutes_docx(meeting_info: dict, minutes: dict, full_transcript: list)
     try:
         doc = Document(TEMPLATE_PATH)
     except Exception:
-        # Template corrupted or missing — fall back to blank document
+        # Template corrupted or missing â fall back to blank document
         doc = Document()
         doc.add_paragraph()  # ensure at least one paragraph exists
 
@@ -340,11 +340,11 @@ def build_minutes_docx(meeting_info: dict, minutes: dict, full_transcript: list)
     for p in doc.paragraphs[1:]:
         p._element.getparent().remove(p._element)
 
-    # ── Cover / Title block ─────────────────────────────────────────────────
+    # ââ Cover / Title block âââââââââââââââââââââââââââââââââââââââââââââââââ
     title_p = doc.paragraphs[0]
     title_p.clear()
     title_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    r = title_p.add_run('MEETING MINUTES / 会议记录')
+    r = title_p.add_run('MEETING MINUTES / ä¼è®®è®°å½')
     r.font.size = Pt(16)
     r.font.bold = True
     r.font.name = 'Assistant'
@@ -352,7 +352,7 @@ def build_minutes_docx(meeting_info: dict, minutes: dict, full_transcript: list)
 
     subtitle_p = doc.add_paragraph()
     subtitle_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    r2 = subtitle_p.add_run('CHEETAH CHROME SOUTH AFRICA (PTY) LTD — XGL')
+    r2 = subtitle_p.add_run('CHEETAH CHROME SOUTH AFRICA (PTY) LTD â XGL')
     r2.font.size = Pt(10)
     r2.font.name = 'Assistant'
     r2.font.color.rgb = RGBColor(0x55, 0x55, 0x55)
@@ -366,21 +366,21 @@ def build_minutes_docx(meeting_info: dict, minutes: dict, full_transcript: list)
 
     add_divider(doc)
 
-    # ── Section 1: Meeting Info ─────────────────────────────────────────────
-    add_heading(doc, '1. Meeting Information / 会议信息', level=1)
+    # ââ Section 1: Meeting Info ââââââââââââââââââââââââââââââââââââââââââââââ
+    add_heading(doc, '1. Meeting Information / ä¼è®®ä¿¡æ¯', level=1)
     add_meta_table(doc, meeting_info)
 
-    # ── Section 2: Overview ─────────────────────────────────────────────────
+    # ââ Section 2: Overview âââââââââââââââââââââââââââââââââââââââââââââââââ
     overview = minutes.get('overview', {})
     if overview:
-        add_heading(doc, '2. Overview / 概述', level=1)
+        add_heading(doc, '2. Overview / æ¦è¿°', level=1)
         add_bilingual_para(doc, overview.get('en', ''), overview.get('zh', ''))
         doc.add_paragraph()
 
-    # ── Section 3: Key Decisions ─────────────────────────────────────────────
+    # ââ Section 3: Key Decisions âââââââââââââââââââââââââââââââââââââââââââââ
     decisions = minutes.get('key_decisions', [])
     # re-number sections since overview might shift numbering
-    add_heading(doc, '3. Key Decisions / 主要决议', level=1)
+    add_heading(doc, '3. Key Decisions / ä¸»è¦å³è®®', level=1)
     if decisions:
         for i, item in enumerate(decisions, 1):
             en = item.get('en', '')
@@ -422,38 +422,38 @@ def build_minutes_docx(meeting_info: dict, minutes: dict, full_transcript: list)
                 r_meta.font.color.rgb = RGBColor(0x99, 0x99, 0x99)
     else:
         p = doc.add_paragraph()
-        p.add_run('No key decisions recorded. / 无主要决议。').font.size = Pt(10)
+        p.add_run('No key decisions recorded. / æ ä¸»è¦å³è®®ã').font.size = Pt(10)
 
-    # ── Section 4: Action Items ─────────────────────────────────────────────
+    # ââ Section 4: Action Items âââââââââââââââââââââââââââââââââââââââââââââ
     action_items = minutes.get('action_items', [])
-    add_heading(doc, '4. Action Items / 行动事项', level=1)
+    add_heading(doc, '4. Action Items / è¡å¨äºé¡¹', level=1)
     if action_items:
         add_action_items_table(doc, action_items)
     else:
         p = doc.add_paragraph()
-        p.add_run('No action items recorded. / 无行动事项。').font.size = Pt(10)
+        p.add_run('No action items recorded. / æ è¡å¨äºé¡¹ã').font.size = Pt(10)
 
-    # ── Section 5: Pending Matters ──────────────────────────────────────────
+    # ââ Section 5: Pending Matters ââââââââââââââââââââââââââââââââââââââââââ
     pending = minutes.get('pending_matters', [])
-    add_heading(doc, '5. Pending Matters / 待处理事项', level=1)
+    add_heading(doc, '5. Pending Matters / å¾å¤çäºé¡¹', level=1)
     if pending:
         add_pending_section(doc, pending)
     else:
         p = doc.add_paragraph()
-        p.add_run('No pending matters. / 无待处理事项。').font.size = Pt(10)
+        p.add_run('No pending matters. / æ å¾å¤çäºé¡¹ã').font.size = Pt(10)
 
-    # ── Appendix: Full Transcript ───────────────────────────────────────────
+    # ââ Appendix: Full Transcript âââââââââââââââââââââââââââââââââââââââââââ
     if full_transcript:
         add_transcript_appendix(doc, full_transcript)
 
-    # ── Return as bytes ─────────────────────────────────────────────────────
+    # ââ Return as bytes âââââââââââââââââââââââââââââââââââââââââââââââââââââ
     buf = io.BytesIO()
     doc.save(buf)
     buf.seek(0)
     return buf.read()
 
 
-# ── Flask routes ─────────────────────────────────────────────────────────────
+# ââ Flask routes âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 @app.route('/health', methods=['GET'])
 def health():
@@ -551,7 +551,7 @@ def upload_file():
 
     base_url = request.host_url.rstrip('/')
     url = f"{base_url}/serve/{stored_name}"
-    app.logger.info(f"File stored: {stored_name} → {url}")
+    app.logger.info(f"File stored: {stored_name} â {url}")
     return _cors(jsonify({'url': url}))
 
 
