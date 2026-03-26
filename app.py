@@ -8,6 +8,7 @@ import os
 import io
 import copy
 import logging
+import uuid
 from datetime import datetime
 from flask import Flask, request, send_file, jsonify
 from docx import Document
@@ -224,7 +225,7 @@ def add_action_items_table(doc, action_items: list):
     for item in action_items:
         row = tbl.add_row()
         task_en = item.get('task_en', '')
-        task_zh = item.get('task_zh', '')
+        task`zh = item.get('task_zh', '')
 
         # Task cell (EN + ZH)
         tc = row.cells[0]
@@ -328,21 +329,10 @@ def build_minutes_docx(meeting_info: dict, minutes: dict, full_transcript: list)
     if not os.path.exists(TEMPLATE_PATH):
         raise FileNotFoundError(f"Template not found at {TEMPLATE_PATH}")
 
-    # Validate template ZIP integrity before loading
-    _template_ok = False
-    if os.path.exists(TEMPLATE_PATH):
-        try:
-            import zipfile as _zf
-            with _zf.ZipFile(TEMPLATE_PATH, 'r') as _z:
-                _bad = _z.testzip()
-                if _bad is None:
-                    _template_ok = True
-        except Exception:
-            _template_ok = False
-    
-    if _template_ok:
+    try:
         doc = Document(TEMPLATE_PATH)
-    else:
+    except Exception:
+        # Template corrupted or missing — fall back to blank document
         doc = Document()
         doc.add_paragraph()  # ensure at least one paragraph exists
 
@@ -530,6 +520,53 @@ def generate_minutes():
     except Exception as e:
         app.logger.error(f"Error generating DOCX: {e}", exc_info=True)
         return jsonify({'error': str(e)}), 500
+
+
+def _cors(resp):
+    resp.headers['Access-Control-Allow-Origin'] = '*'
+    resp.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
+    resp.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+    return resp
+
+
+@app.route('/upload-file', methods=['POST', 'OPTIONS'])
+def upload_file():
+    """
+    POST /upload-file  (multipart form-data, field name = 'file')
+    Stores the file in /tmp and returns a public download URL.
+    Supports CORS from any origin so browser pages can call this directly.
+    """
+    if request.method == 'OPTIONS':
+        return _cors(app.make_response(''))
+
+    if 'file' not in request.files:
+        return _cors(jsonify({'error': 'No file field in request'})), 400
+
+    f = request.files['file']
+    token = str(uuid.uuid4())
+    ext = os.path.splitext(f.filename)[1] if f.filename else '.bin'
+    stored_name = f"{token}{ext}"
+    path = f"/tmp/{stored_name}"
+    f.save(path)
+
+    base_url = request.host_url.rstrip('/')
+    url = f"{base_url}/serve/{stored_name}"
+    app.logger.info(f"File stored: {stored_name} → {url}")
+    return _cors(jsonify({'url': url}))
+
+
+@app.route('/serve/<stored_name>', methods=['GET'])
+def serve_file(stored_name):
+    """Serve a previously uploaded temp file from /tmp."""
+    # Basic security: only allow uuid-style names with common audio/video extensions
+    allowed_exts = {'.m4a', '.mp4', '.mp3', '.wav', '.aac', '.ogg', '.flac', '.webm', '.bin'}
+    ext = os.path.splitext(stored_name)[1].lower()
+    if ext not in allowed_exts:
+        return jsonify({'error': 'File type not allowed'}), 403
+    path = f"/tmp/{stored_name}"
+    if not os.path.exists(path):
+        return jsonify({'error': 'File not found or expired'}), 404
+    return send_file(path, as_attachment=False)
 
 
 if __name__ == '__main__':
